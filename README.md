@@ -1,2 +1,3 @@
-# soen471
+# soen 471 project
+
 abstract :
