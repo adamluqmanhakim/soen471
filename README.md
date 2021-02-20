@@ -41,4 +41,3 @@ The second technique is **collaborative** filtering. As opposed to content-based
 We will use Pyspark in order to implement two recommendations systems that use the two different techniques.
 
 
-![\Large u(x,i)= cos(x,i)=\frac{x*i}{||x||.||i||}](https://latex.codecogs.com/svg.latex?x%3D%5Cfrac%7B-b%5Cpm%5Csqrt%7Bb%5E2-4ac%7D%7D%7B2a%7D)
