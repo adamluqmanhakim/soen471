@@ -51,7 +51,7 @@ Getting the movie recommendations for a specific movie title is simply calculati
 
 
 For collaborative filtering, we use the Alternating Least Squares (ALS) offered by Pyspark. 
-Matrix factorisation using Alternating Least Squares (ALS) tries to approximate the ratings matrix R as the product of two lower-rank matrices, X and Y, i.e. X*Yt = R. These approximations are also referred to as ‘factor’ matrices. This method is iterative in nature. One of the factor matrices is kept constant throughout each iteration, and the other is solved using least squares. Cold strategy is set to ‘drop’ as it is common to encounter users or items in the evaluation set which are not in the training set, when using random splits with Spark’s CrossValidator. Spark will by default assign NaN predictions. This is avoided with the ‘drop’ cold strategy. We make use of hyperparameter tuning using ParamGridBuilder. According to Spark’s documentation, it is a builder for a param grid used in grid search-based model selection. We chose 4 parameters for each grid. For the Rank grid, we have chosen the following values: 10, 50 ,100 and 150. We randomly chose these values and tested them manually. For the regParam grid, we chose the values 0.01, 0.05, 0.1 and 0.15. Therefore, our rank is 16 as we have 16 features to use (number of latent factors). 
+Matrix factorisation (ALS) tries to approximate the ratings matrix R as the product of two lower-rank matrices, X and Y, i.e. X*Yt = R. These approximations are also referred to as ‘factor’ matrices. This method is iterative in nature. One of the factor matrices is kept constant throughout each iteration, and the other is solved using least squares. Cold strategy is set to ‘drop’ as it is common to encounter users or items in the evaluation set which are not in the training set, when using random splits with Spark’s CrossValidator. Spark will by default assign NaN predictions. This is avoided with the ‘drop’ cold strategy. We make use of hyperparameter tuning using ParamGridBuilder. According to Spark’s documentation, it is a builder for a param grid used in grid search-based model selection. We chose 4 parameters for each grid. For the Rank grid, we have chosen the following values: 10, 50 ,100 and 150. We randomly chose these values and tested them manually. For the regParam grid, we chose the values 0.01, 0.05, 0.1 and 0.15. Therefore, our rank is 16 as we have 16 features to use (number of latent factors). 
 
 ![image](https://user-images.githubusercontent.com/6520150/115175298-c07fb480-a098-11eb-8500-6fc79d833505.png)
 As the evaluator, we use the RMSE evaluator.
@@ -59,6 +59,64 @@ As the evaluator, we use the RMSE evaluator.
 
 We feed the param_grid and the evaluator into the cross validator for the ALS model with a chosen value of 5 for the folds. In the results we talk about the best model parameters out of the 16 parameters that were inputted in the cross validator. 
 
+### Results
+For content based filtering, we decided to get the top ten recommendations for two distinct movie titles: “Star Wars” and “Shrek”. The results are the following titles.
+Star Wars gives a recommendation of:
+- The Empire Strikes Back
+- Return of the Jedi
+- Star Wars: The Force Awakens
+- Shrek the Third
+- Star Wars: Episode III - Revenge of the Sith
+- Where Eagles Dare
+- Shrek Forever After
+- On Her Majesty's Secret Service
+- The Ice Pirates
+- Princess Caraboo
 
+Shrek gives a recommendation of:
+- Shrek 2
+- Shrek Forever After
+- Shrek the Third
+- Silk Stockings
+- Dragon Hunters
+- White Men Can't Jump
+- Shanghai Noon
+- Cinderella
+- Cinderella
+- Into the Woods
 
+![image](https://user-images.githubusercontent.com/6520150/115176419-0fc6e480-a09b-11eb-84c0-fa0e998d4370.png)
 
+As for collaborative filtering, we decided to get the movie recommendations for the 3rd user and the 20th user. We also display the results for the top 10 ratings of both users in order to compare them with our recommendations.
+For the 3rd user, we found the following recommendations (first figure) and the movie ratings (second figure)
+
+![image](https://user-images.githubusercontent.com/6520150/115176637-7c41e380-a09b-11eb-84c1-d8858531c17b.png)
+
+Notice the "userId = 3" and limit(10). 
+
+For the 20th user, we found the following recommendations and movie ratings:
+![image](https://user-images.githubusercontent.com/6520150/115176704-a398b080-a09b-11eb-9dcf-88ef3b751c4d.png)
+
+We color-coded underlined the movie genres that match in both recommendaations and movie ratings.
+
+### Discussion
+
+In our results for content filtering, we have proved that the results do not change after multiple runs. The movie recommendations remain the same as the calculations are based on the content of each movies (which do not change). The similarity scores do not change after each run as the cosine similarity is simply a mathematical formula that calculates the score based on the content. Therefore, we do not have much to interpret for the results of content filtering, other than that it is a simple way of recommend movies based on the content of the movie. The content of course was chosen to be plot movie description. In order to improve this algorithm, you would need to change the content that it is evaluating. For example, instead of doing it based on plot description, you would analyze the cast/crew of a movie and/or the director of a movie. You can also combine content. 
+
+For collaborative filtering, we measured it using the RMSE evaluator. Since the 100k ratings dataset would take several hours to complete, we decided to cut the ratings to 20,000 and train the model with the smaller version of the dataset. This resulted in a poor RMSE score. For further experimentation, we cut down the ratings to 2000 ratings, and we trained the model again and ran the evaluator again. We found an even worse RMSE score. This proves that a better RMSE score is based on whether there are sufficient ratings to train the model. These are the RMSE results we found using 20,000 ratings:
+![image](https://user-images.githubusercontent.com/6520150/115177299-ec049e00-a09c-11eb-8d37-bc5ff38313bf.png)
+
+We still found that 1.037 is a bad RMSE score as it is more than 1.
+
+After experimenting with 2000 ratings, we had an RMSE score of 1.543 which is worse than our initial one with 20,0000. 
+![image](https://user-images.githubusercontent.com/6520150/115177409-2a9a5880-a09d-11eb-9ea1-0d3fd29e5c54.png)
+
+As shown in this figure, we found that the 20th user rated 5 movies with these specific genres: Comedy|Romance, Animation|Children and Action|Adventure. 
+In our recommendation results, we found three movies with these 3 exact genres. 
+![image](https://user-images.githubusercontent.com/6520150/115176704-a398b080-a09b-11eb-9dcf-88ef3b751c4d.png)
+
+Despite the bad RMSE score, our collaborative filtering recommendation system is still able to recommend movies that have exact genres that interest the user - these movies are based on the users' previous history of movie ratings.
+
+To compare content filtering with collaborative filtering, these two techniques are different because the latter is based on the users's explicit ratings (history). This can vary differently between users. We also found that both the 3rd and 20th user rated movies highly with a score of 5.0 for all movies - the highest. Rating all movies the same rating affects the score as there is not a lot of variance between ratings. This is true as well for users with no ratings or new users. The recommendations for users with no ratings will not be accurate as there are no explicit ratings to be based on. 
+
+In the future, we would like to train the collaborative filtering model with 100k ratings in order to see if the RMSE rating has improved. We would expect a RMSE rating lower than 1. We would also like to explore how hybrid recommender systems work as they combine different techniques.
